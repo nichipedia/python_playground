@@ -61,10 +61,15 @@ def scrape_raw_data(logs):
     for bot in logs['logs']:
         log_name = bot['filename']
         raw_json[log_name] = {}
+        map_position = requests.get(f'{base_url}/map?log={log_name}')
+        if (map_position.status_code == 200):
+            raw_json[log_name]['position'] = map_position.text
+        else:
+            print(f'Not able to read position for {log_name}')
         for path in path_opts:
             requests.get(f'{base_url}/convert-if-needed')
             proto_check = requests.get(f'{base_url}/paths?log={log_name}&root_path=')
-            if (proto_check.status_code == 200 and proto_check.text.length > 0):
+            if (proto_check.status_code == 200 and len(proto_check.text) > 0):
                 proto_name_resp = requests.get(f'{base_url}/paths?log={log_name}&root_path={path}')
                 if proto_name_resp.status_code == 200:
                     proto_names = ast.literal_eval(proto_name_resp.text)
@@ -137,5 +142,4 @@ def format_data():
         
 
 logs = get_logs()
-print(logs)
 scrape_raw_data(logs)
