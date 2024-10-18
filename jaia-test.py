@@ -63,28 +63,32 @@ def scrape_raw_data(logs):
         raw_json[log_name] = {}
         for path in path_opts:
             requests.get(f'{base_url}/convert-if-needed')
-            proto_name_resp = requests.get(f'{base_url}/paths?log={log_name}&root_path={path}')
-            if proto_name_resp.status_code == 200:
-                proto_names = ast.literal_eval(proto_name_resp.text)
-                for proto_name in proto_names:
-                    data_available_resp = requests.get(f'{base_url}/paths?log={log_name}&root_path={path}/{proto_name}')
-                    if (data_available_resp.status_code == 200):
-                        data_available = ast.literal_eval(data_available_resp.text)
-                        data_available.remove('_datenum_')
-                        data_available.remove('_scheme_')
-                        data_available.remove('_utime_')
-                        for data_series in data_available:
-                            #print(f'Reading {log_name}/{path}/{proto_name}/{data_series}')
-                            series_resp = requests.get(f'{base_url}/series?log={log_name}&path={path}/{proto_name}/{data_series}')
-                            if series_resp.status_code == 200:
-                                series = json.loads(series_resp.text)
-                                raw_json[log_name][data_series] = series
-                            else:
-                                print(f'Issue reading daw for {log_name}/{path}/{proto_name}/{data_available}: {series_resp.text}')
-                    else:
-                        print(f'Issue reading daw for {log_name}/{path}/{proto_name}: {data_available_resp.text}')
+            proto_check = requests.get(f'{base_url}/paths?log={log_name}&root_path=')
+            if (proto_check.status_code == 200 and proto_check.text.length > 0):
+                proto_name_resp = requests.get(f'{base_url}/paths?log={log_name}&root_path={path}')
+                if proto_name_resp.status_code == 200:
+                    proto_names = ast.literal_eval(proto_name_resp.text)
+                    for proto_name in proto_names:
+                        data_available_resp = requests.get(f'{base_url}/paths?log={log_name}&root_path={path}/{proto_name}')
+                        if (data_available_resp.status_code == 200):
+                            data_available = ast.literal_eval(data_available_resp.text)
+                            data_available.remove('_datenum_')
+                            data_available.remove('_scheme_')
+                            data_available.remove('_utime_')
+                            for data_series in data_available:
+                                #print(f'Reading {log_name}/{path}/{proto_name}/{data_series}')
+                                series_resp = requests.get(f'{base_url}/series?log={log_name}&path={path}/{proto_name}/{data_series}')
+                                if series_resp.status_code == 200:
+                                    series = json.loads(series_resp.text)
+                                    raw_json[log_name][data_series] = series
+                                else:
+                                    print(f'Issue reading daw for {log_name}/{path}/{proto_name}/{data_available}: {series_resp.text}')
+                        else:
+                            print(f'Issue reading daw for {log_name}/{path}/{proto_name}: {data_available_resp.text}')
+                else:
+                    print(f'Issue reading daw for {log_name}/{path}: {proto_name_resp.text}')
             else:
-                print(f'Issue reading daw for {log_name}/{path}: {proto_name_resp.text}')
+                print('No Logs available ')
     print(json.dumps(raw_json))
 
 def format_data():
